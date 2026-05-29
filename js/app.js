@@ -6,9 +6,11 @@ import {
   getState, updateState, markTaskComplete, markTaskIncomplete,
   saveQuizScore, markDayComplete, markDayIncomplete, resetDayProgress,
   addXP, getCurrentDay, advanceDay, setCurrentDay, updateStreak,
-  getAdminPIN, setAdminPIN, getCustomQuestions, setCustomQuestions,
-  addActivity, exportData, resetAllProgress
+  getCustomQuestions, setCustomQuestions,
+  addActivity, exportData, resetAllProgress, initCloudSync
 } from './store.js';
+
+import { verifyAdminPinCloud, setAdminPinCloud } from './firebase.js';
 
 import {
   getDayCurriculum, getDayTasks, getPhaseInfo, getLevelInfo,
@@ -39,6 +41,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initApp() {
+  initCloudSync(() => {
+    // Re-render current page when cloud sync pushes new data
+    if (currentPage === 'home') renderHome();
+    else if (currentPage === 'streak') renderStreak();
+    else if (currentPage === 'admin') {
+      renderAdminHero();
+      renderAdminStats();
+      populateAdminDaySelectors();
+    }
+  });
+
   updateStreak();
   renderHome();
   setupNavigation();
@@ -836,7 +849,7 @@ function setupAdminPIN() {
   const pinInputs = document.querySelectorAll('.pin-digit');
 
   pinInputs.forEach((input, idx) => {
-    input.addEventListener('input', (e) => {
+    input.addEventListener('input', async (e) => {
       const val = e.target.value;
       if (val && idx < 3) {
         pinInputs[idx + 1].focus();
@@ -844,7 +857,12 @@ function setupAdminPIN() {
       // Check if all filled
       const pin = Array.from(pinInputs).map(i => i.value).join('');
       if (pin.length === 4) {
-        if (pin === getAdminPIN()) {
+        // Disable temporarily while checking
+        pinInputs.forEach(i => i.disabled = true);
+        const isValid = await verifyAdminPinCloud(pin);
+        pinInputs.forEach(i => i.disabled = false);
+
+        if (isValid) {
           document.getElementById('admin-gate').style.display = 'none';
           document.getElementById('admin-dashboard').style.display = 'block';
           renderAdminHero();
@@ -1287,12 +1305,20 @@ function setupManageActions() {
   document.getElementById('manage-day-select')?.addEventListener('change', updateManageDayStatus);
 
   // Change PIN
-  document.getElementById('btn-change-pin')?.addEventListener('click', () => {
+  document.getElementById('btn-change-pin')?.addEventListener('click', async () => {
     const newPin = document.getElementById('new-pin').value;
     if (newPin.length === 4 && /^\d{4}$/.test(newPin)) {
-      setAdminPIN(newPin);
+      const btn = document.getElementById('btn-change-pin');
+      const originalText = btn.textContent;
+      btn.textContent = 'Saving to Cloud...';
+      btn.disabled = true;
+      
+      await setAdminPinCloud(newPin);
+      
+      btn.textContent = originalText;
+      btn.disabled = false;
       document.getElementById('new-pin').value = '';
-      showToast('PIN updated! 🔐', 'success');
+      showToast('PIN updated securely on Cloud! 🔐', 'success');
     } else {
       showToast('PIN must be 4 digits!', 'error');
     }

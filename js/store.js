@@ -2,8 +2,9 @@
 // STORE - localStorage wrapper & state
 // ========================================
 
+import { syncStateToCloud, listenToCloudState } from './firebase.js';
+
 const STORAGE_KEY = 'english_quest_data';
-const ADMIN_PIN_KEY = 'english_quest_pin';
 
 const defaultState = {
   currentDay: 1,
@@ -37,7 +38,24 @@ export function updateState(updater) {
   const state = getState();
   updater(state);
   setState(state);
+  
+  if (!isSyncingFromCloud) {
+    syncStateToCloud(state);
+  }
+  
   return state;
+}
+
+let isSyncingFromCloud = false;
+
+// Call this once on startup
+export function initCloudSync(onSync) {
+  listenToCloudState((cloudState) => {
+    isSyncingFromCloud = true;
+    setState(cloudState);
+    isSyncingFromCloud = false;
+    if (onSync) onSync();
+  });
 }
 
 function initState() {
@@ -157,15 +175,7 @@ export function updateStreak() {
   });
 }
 
-// === Admin PIN ===
-
-export function getAdminPIN() {
-  return localStorage.getItem(ADMIN_PIN_KEY) || '1234';
-}
-
-export function setAdminPIN(pin) {
-  localStorage.setItem(ADMIN_PIN_KEY, pin);
-}
+// Admin PIN is now exclusively handled by Firebase in firebase.js
 
 // === Custom Questions ===
 
