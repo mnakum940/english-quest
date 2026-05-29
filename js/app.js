@@ -6,11 +6,9 @@ import {
   getState, updateState, markTaskComplete, markTaskIncomplete,
   saveQuizScore, markDayComplete, markDayIncomplete, resetDayProgress,
   addXP, getCurrentDay, advanceDay, setCurrentDay, updateStreak,
-  getCustomQuestions, setCustomQuestions,
-  addActivity, exportData, resetAllProgress, initCloudSync
+  getAdminPIN, setAdminPIN, getCustomQuestions, setCustomQuestions,
+  addActivity, exportData, resetAllProgress
 } from './store.js';
-
-import { verifyAdminPinCloud, setAdminPinCloud } from './firebase.js';
 
 import {
   getDayCurriculum, getDayTasks, getPhaseInfo, getLevelInfo,
@@ -41,17 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initApp() {
-  initCloudSync(() => {
-    // Re-render current page when cloud sync pushes new data
-    if (currentPage === 'home') renderHome();
-    else if (currentPage === 'streak') renderStreak();
-    else if (currentPage === 'admin') {
-      renderAdminHero();
-      renderAdminStats();
-      populateAdminDaySelectors();
-    }
-  });
-
   updateStreak();
   renderHome();
   setupNavigation();
@@ -849,7 +836,7 @@ function setupAdminPIN() {
   const pinInputs = document.querySelectorAll('.pin-digit');
 
   pinInputs.forEach((input, idx) => {
-    input.addEventListener('input', async (e) => {
+    input.addEventListener('input', (e) => {
       const val = e.target.value;
       if (val && idx < 3) {
         pinInputs[idx + 1].focus();
@@ -857,12 +844,7 @@ function setupAdminPIN() {
       // Check if all filled
       const pin = Array.from(pinInputs).map(i => i.value).join('');
       if (pin.length === 4) {
-        // Disable temporarily while checking
-        pinInputs.forEach(i => i.disabled = true);
-        const isValid = await verifyAdminPinCloud(pin);
-        pinInputs.forEach(i => i.disabled = false);
-
-        if (isValid) {
+        if (pin === getAdminPIN()) {
           document.getElementById('admin-gate').style.display = 'none';
           document.getElementById('admin-dashboard').style.display = 'block';
           renderAdminHero();
@@ -909,7 +891,8 @@ function setupAdminTabs() {
 function renderAdminHero() {
   const state = getState();
   const heroEl = document.getElementById('admin-hero');
-  const completedDays = Object.values(state.days).filter(d => d.completed).length;
+  const days = state.days || {};
+  const completedDays = Object.values(days).filter(d => d && d.completed).length;
   const phase = getPhaseInfo(state.currentDay);
   const level = getLevelInfo(state.xp);
 
@@ -923,11 +906,11 @@ function renderAdminHero() {
     </div>
     <div class="hero-stats-row">
       <div class="hero-stat">
-        <div class="hero-stat-value" style="color:var(--accent-coral);">${state.streak.current}🔥</div>
+        <div class="hero-stat-value" style="color:var(--accent-coral);">${state.streak?.current || 0}🔥</div>
         <div class="hero-stat-label">Streak</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-value" style="color:var(--accent-gold);">${state.xp}</div>
+        <div class="hero-stat-value" style="color:var(--accent-gold);">${state.xp || 0}</div>
         <div class="hero-stat-label">Total XP</div>
       </div>
       <div class="hero-stat">
@@ -941,9 +924,10 @@ function renderAdminHero() {
 function renderAdminStats() {
   const state = getState();
   const statsGrid = document.getElementById('stats-grid');
+  const days = state.days || {};
 
-  const completedDays = Object.values(state.days).filter(d => d.completed).length;
-  const quizzes = Object.values(state.days).filter(d => d.quizScore);
+  const completedDays = Object.values(days).filter(d => d && d.completed).length;
+  const quizzes = Object.values(days).filter(d => d && d.quizScore);
   const avgAccuracy = quizzes.length > 0
     ? Math.round(quizzes.reduce((sum, d) => sum + (d.quizScore.score / d.quizScore.total) * 100, 0) / quizzes.length)
     : 0;
@@ -961,14 +945,14 @@ function renderAdminStats() {
     <div class="stats-card">
       <div class="stats-card-icon" style="background:rgba(255,107,107,0.12);">🔥</div>
       <div class="stats-card-data">
-        <div class="stats-card-value" style="color:var(--accent-coral);">${state.streak.current} / ${state.streak.longest}</div>
+        <div class="stats-card-value" style="color:var(--accent-coral);">${state.streak?.current || 0} / ${state.streak?.longest || 0}</div>
         <div class="stats-card-label">Current / Best</div>
       </div>
     </div>
     <div class="stats-card">
       <div class="stats-card-icon" style="background:rgba(255,217,61,0.12);">⭐</div>
       <div class="stats-card-data">
-        <div class="stats-card-value" style="color:var(--accent-gold);">${state.xp}</div>
+        <div class="stats-card-value" style="color:var(--accent-gold);">${state.xp || 0}</div>
         <div class="stats-card-label">Total XP</div>
       </div>
     </div>
@@ -998,9 +982,9 @@ function renderAdminStats() {
   // Improvement tracker
   const improvementEl = document.getElementById('admin-improvement');
   const taskCompletionPct = completedDays > 0 ? Math.round((completedDays / 84) * 100) : 0;
-  const streakPct = Math.min(100, Math.round((state.streak.current / 30) * 100));
+  const streakPct = Math.min(100, Math.round(((state.streak?.current || 0) / 30) * 100));
   const quizPct = avgAccuracy;
-  const xpPct = Math.min(100, Math.round((state.xp / 2000) * 100));
+  const xpPct = Math.min(100, Math.round(((state.xp || 0) / 2000) * 100));
 
   improvementEl.innerHTML = `
     <h3>📈 Tuli's Improvement</h3>
@@ -1012,7 +996,7 @@ function renderAdminStats() {
     <div class="improvement-row">
       <span class="improvement-label">Streak</span>
       <div class="improvement-bar-track"><div class="improvement-bar-fill purple" style="width:${streakPct}%"></div></div>
-      <span class="improvement-value" style="color:var(--accent-purple);">${state.streak.current}d</span>
+      <span class="improvement-value" style="color:var(--accent-purple);">${state.streak?.current || 0}d</span>
     </div>
     <div class="improvement-row">
       <span class="improvement-label">Accuracy</span>
@@ -1022,13 +1006,14 @@ function renderAdminStats() {
     <div class="improvement-row">
       <span class="improvement-label">XP Growth</span>
       <div class="improvement-bar-track"><div class="improvement-bar-fill gold" style="width:${xpPct}%"></div></div>
-      <span class="improvement-value" style="color:var(--accent-gold);">${state.xp}</span>
+      <span class="improvement-value" style="color:var(--accent-gold);">${state.xp || 0}</span>
     </div>
   `;
 
   // Activity log
   const logContainer = document.getElementById('activity-log');
-  const logs = state.activityLog.slice(0, 20);
+  const activityLog = state.activityLog || [];
+  const logs = activityLog.slice(0, 20);
 
   logContainer.innerHTML = `
     <h3>📋 Tuli's Activity Log</h3>
@@ -1305,20 +1290,12 @@ function setupManageActions() {
   document.getElementById('manage-day-select')?.addEventListener('change', updateManageDayStatus);
 
   // Change PIN
-  document.getElementById('btn-change-pin')?.addEventListener('click', async () => {
+  document.getElementById('btn-change-pin')?.addEventListener('click', () => {
     const newPin = document.getElementById('new-pin').value;
     if (newPin.length === 4 && /^\d{4}$/.test(newPin)) {
-      const btn = document.getElementById('btn-change-pin');
-      const originalText = btn.textContent;
-      btn.textContent = 'Saving to Cloud...';
-      btn.disabled = true;
-      
-      await setAdminPinCloud(newPin);
-      
-      btn.textContent = originalText;
-      btn.disabled = false;
+      setAdminPIN(newPin);
       document.getElementById('new-pin').value = '';
-      showToast('PIN updated securely on Cloud! 🔐', 'success');
+      showToast('PIN updated! 🔐', 'success');
     } else {
       showToast('PIN must be 4 digits!', 'error');
     }

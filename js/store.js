@@ -2,9 +2,8 @@
 // STORE - localStorage wrapper & state
 // ========================================
 
-import { syncStateToCloud, listenToCloudState } from './firebase.js';
-
 const STORAGE_KEY = 'english_quest_data';
+const ADMIN_PIN_KEY = 'english_quest_pin';
 
 const defaultState = {
   currentDay: 1,
@@ -24,6 +23,9 @@ export function getState() {
     // migrate old state if needed
     if (!state.activityLog) state.activityLog = [];
     if (!state.customQuestions) state.customQuestions = {};
+    if (!state.streak) state.streak = { current: 0, longest: 0, lastActiveDate: null };
+    if (state.xp === undefined) state.xp = 0;
+    if (!state.days) state.days = {};
     return state;
   } catch {
     return initState();
@@ -38,30 +40,7 @@ export function updateState(updater) {
   const state = getState();
   updater(state);
   setState(state);
-  
-  if (!isSyncingFromCloud) {
-    syncStateToCloud(state);
-  }
-  
   return state;
-}
-
-let isSyncingFromCloud = false;
-
-// Call this once on startup
-export function initCloudSync(onSync) {
-  const currentState = getState();
-  // If this device has progress, proactively push it to the cloud to populate an empty database
-  if (currentState && currentState.xp > 0) {
-    syncStateToCloud(currentState);
-  }
-
-  listenToCloudState((cloudState) => {
-    isSyncingFromCloud = true;
-    setState(cloudState);
-    isSyncingFromCloud = false;
-    if (onSync) onSync();
-  });
 }
 
 function initState() {
@@ -181,7 +160,15 @@ export function updateStreak() {
   });
 }
 
-// Admin PIN is now exclusively handled by Firebase in firebase.js
+// === Admin PIN ===
+
+export function getAdminPIN() {
+  return localStorage.getItem(ADMIN_PIN_KEY) || '1234';
+}
+
+export function setAdminPIN(pin) {
+  localStorage.setItem(ADMIN_PIN_KEY, pin);
+}
 
 // === Custom Questions ===
 
