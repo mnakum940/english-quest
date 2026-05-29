@@ -50,6 +50,12 @@ let isSyncingFromCloud = false;
 
 // Call this once on startup
 export function initCloudSync(onSync) {
+  const currentState = getState();
+  // If this device has progress, proactively push it to the cloud to populate an empty database
+  if (currentState && currentState.xp > 0) {
+    syncStateToCloud(currentState);
+  }
+
   listenToCloudState((cloudState) => {
     isSyncingFromCloud = true;
     setState(cloudState);

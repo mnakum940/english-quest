@@ -35,19 +35,25 @@ export function listenToCloudState(onCloudUpdate) {
 export async function verifyAdminPinCloud(pin) {
   try {
     const pinRef = ref(db, 'admin/pin');
-    const snapshot = await get(pinRef);
+    
+    // 3-second timeout to prevent UI freezing if database is missing or unreachable
+    const snapshot = await Promise.race([
+      get(pinRef),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Cloud DB Timeout')), 3000))
+    ]);
+    
     let truePin = snapshot.val();
     
     // If not set yet on Firebase, set the default to '1234'
     if (!truePin) {
-      await set(pinRef, '1234');
+      await set(pinRef, '1234').catch(() => {}); // Catch permission errors silently
       truePin = '1234';
     }
     
     return pin === truePin;
   } catch (err) {
-    console.error("Could not reach cloud to verify PIN, falling back to local check", err);
-    return pin === '1234'; // Fallback if completely offline
+    console.warn("Could not reach cloud to verify PIN (Check DB Rules or Setup). Falling back to 1234", err);
+    return pin === '1234'; // Fallback if completely offline or misconfigured
   }
 }
 
