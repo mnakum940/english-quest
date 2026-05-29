@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Tuli's fun English learning tracker with daily lessons, quizzes, and streak tracking" />
+  <meta name="theme-color" content="#1a1025" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Tuli's English Quest ✨</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/assets/index-C9Ta108k.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BP9QMNN9.css">
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div id="splash-screen" class="splash">
+    <div class="splash-content">
+      <div class="splash-emoji">✨</div>
+      <h1 class="splash-title">Tuli's English Quest</h1>
+      <p class="splash-subtitle">Your daily English adventure 💕</p>
+      <div class="splash-loader">
+        <div class="splash-loader-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Main App Container -->
+  <div id="app" class="app-container" style="display:none;">
+
+    <!-- ===== PAGE: HOME / DASHBOARD ===== -->
+    <section id="page-home" class="page active">
+      <header class="page-header">
+        <div class="header-left">
+          <h1 class="greeting" id="greeting-text">Hey Tuli! 👋</h1>
+          <p class="date-text" id="date-text"></p>
+        </div>
+        <div class="header-right">
+          <button id="btn-admin-trigger" class="icon-btn admin-trigger" aria-label="Settings">⚙️</button>
+        </div>
+      </header>
+
+      <!-- Streak Card -->
+      <div class="streak-card" id="streak-card">
+        <div class="streak-fire" id="streak-fire">🔥</div>
+        <div class="streak-info">
+          <span class="streak-count" id="streak-count">0</span>
+          <span class="streak-label">Day Streak</span>
+        </div>
+        <div class="streak-xp">
+          <span class="xp-badge" id="xp-total">0 XP</span>
+        </div>
+      </div>
+
+      <!-- Progress Ring -->
+      <div class="progress-section">
+        <div class="progress-ring-container" id="progress-ring-container">
+          <svg class="progress-ring" viewBox="0 0 120 120">
+            <circle class="progress-ring-bg" cx="60" cy="60" r="52" />
+            <circle class="progress-ring-fill" cx="60" cy="60" r="52" id="progress-ring-fill" />
+          </svg>
+          <div class="progress-ring-text">
+            <span class="progress-day" id="progress-day">Day 1</span>
+            <span class="progress-total">of 84</span>
+          </div>
+        </div>
+        <div class="level-badge" id="level-badge">
+          <span class="level-icon">🌱</span>
+          <span class="level-text" id="level-text">Beginner</span>
+        </div>
+      </div>
+
+      <!-- Today's Tasks -->
+      <div class="section-header">
+        <h2>Today's Mission 🎯</h2>
+      </div>
+      <div class="tasks-card" id="tasks-card">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Motivational Quote -->
+      <div class="quote-card" id="quote-card">
+        <p class="quote-text" id="quote-text">"The expert in anything was once a beginner."</p>
+        <span class="quote-author" id="quote-author">— Helen Hayes</span>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: LEARN ===== -->
+    <section id="page-learn" class="page">
+      <header class="page-header">
+        <button class="back-btn" data-page="home">←</button>
+        <h1>Today's Lesson 📚</h1>
+      </header>
+      <div class="lesson-container" id="lesson-container">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- ===== PAGE: QUIZ ===== -->
+    <section id="page-quiz" class="page">
+      <header class="page-header">
+        <button class="back-btn" data-page="home">←</button>
+        <h1>Quiz Time! 🧠</h1>
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" id="quiz-progress-fill"></div>
+        </div>
+      </header>
+      <div class="quiz-container" id="quiz-container">
+        <!-- Populated by JS -->
+      </div>
+      <div class="quiz-result" id="quiz-result" style="display:none;">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- ===== PAGE: STREAK / PROGRESS ===== -->
+    <section id="page-streak" class="page">
+      <header class="page-header">
+        <button class="back-btn" data-page="home">←</button>
+        <h1>Tuli's Progress 📊</h1>
+      </header>
+      <div class="streak-detail-container" id="streak-detail-container">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- ===== PAGE: VOCAB PRACTICE ===== -->
+    <section id="page-vocab" class="page">
+      <header class="page-header">
+        <button class="back-btn" data-page="home">←</button>
+        <h1>Vocabulary 💬</h1>
+      </header>
+      <div class="vocab-container" id="vocab-container">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- ===== PAGE: ADMIN PANEL ===== -->
+    <section id="page-admin" class="page">
+      <!-- Admin PIN gate -->
+      <div class="admin-gate" id="admin-gate">
+        <div class="admin-gate-content">
+          <div class="admin-gate-icon">🔐</div>
+          <h2>Admin Access</h2>
+          <p>Manage Tuli's learning journey</p>
+          <div class="pin-input-group" id="pin-input-group">
+            <input type="password" class="pin-digit" maxlength="1" data-index="0" inputmode="numeric" />
+            <input type="password" class="pin-digit" maxlength="1" data-index="1" inputmode="numeric" />
+            <input type="password" class="pin-digit" maxlength="1" data-index="2" inputmode="numeric" />
+            <input type="password" class="pin-digit" maxlength="1" data-index="3" inputmode="numeric" />
+          </div>
+          <p class="pin-error" id="pin-error" style="display:none;">Wrong PIN! Try again.</p>
+          <p class="pin-hint">Default: 1234</p>
+        </div>
+      </div>
+
+      <!-- Admin Dashboard (shown after PIN) -->
+      <div class="admin-dashboard" id="admin-dashboard" style="display:none;">
+        <header class="page-header admin-header">
+          <button class="back-btn" data-page="home">←</button>
+          <h1>Tuli's Dashboard 🛡️</h1>
+        </header>
+
+        <!-- Hero Summary Card -->
+        <div class="admin-hero" id="admin-hero">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Admin Tabs -->
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-tab="stats">📊 Stats</button>
+          <button class="admin-tab" data-tab="questions">📝 Questions</button>
+          <button class="admin-tab" data-tab="manage">⚙️ Manage</button>
+        </div>
+
+        <!-- Stats Tab -->
+        <div class="admin-tab-content active" id="tab-stats">
+          <div class="stats-grid" id="stats-grid">
+            <!-- Populated by JS -->
+          </div>
+          <div class="admin-improvement" id="admin-improvement">
+            <!-- Populated by JS -->
+          </div>
+          <div class="activity-log" id="activity-log">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Questions Tab -->
+        <div class="admin-tab-content" id="tab-questions">
+          <div class="question-manager" id="question-manager">
+            <div class="day-selector">
+              <label for="admin-day-select">Select Day:</label>
+              <select id="admin-day-select"></select>
+            </div>
+            <div class="question-count-info" id="question-count-info"></div>
+            <div class="question-list" id="admin-question-list">
+              <!-- Populated by JS -->
+            </div>
+            <button class="btn btn-primary btn-add-question" id="btn-add-question">+ Add Question</button>
+          </div>
+
+          <!-- Add/Edit Question Modal -->
+          <div class="modal" id="question-modal" style="display:none;">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 id="modal-title">Add Question</h3>
+                <button class="modal-close" id="modal-close">✕</button>
+              </div>
+              <form id="question-form">
+                <div class="form-group">
+                  <label for="q-type">Question Type</label>
+                  <select id="q-type">
+                    <option value="mcq">Multiple Choice (MCQ)</option>
+                    <option value="truefalse">True / False</option>
+                    <option value="fill">Fill in the Blank</option>
+                    <option value="correct">Sentence Correction</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="q-text">Question</label>
+                  <textarea id="q-text" rows="3" placeholder="Type your question here..."></textarea>
+                </div>
+                <!-- MCQ Options -->
+                <div class="form-group mcq-options" id="mcq-options">
+                  <label>Options</label>
+                  <input type="text" class="mcq-opt" id="q-opt-a" placeholder="Option A" />
+                  <input type="text" class="mcq-opt" id="q-opt-b" placeholder="Option B" />
+                  <input type="text" class="mcq-opt" id="q-opt-c" placeholder="Option C" />
+                  <input type="text" class="mcq-opt" id="q-opt-d" placeholder="Option D" />
+                  <label for="q-correct-mcq">Correct Option</label>
+                  <select id="q-correct-mcq">
+                    <option value="0">A</option>
+                    <option value="1">B</option>
+                    <option value="2">C</option>
+                    <option value="3">D</option>
+                  </select>
+                </div>
+                <!-- True/False -->
+                <div class="form-group tf-options" id="tf-options" style="display:none;">
+                  <label>Correct Answer</label>
+                  <div class="tf-toggle">
+                    <button type="button" class="tf-btn active" data-val="true">True ✅</button>
+                    <button type="button" class="tf-btn" data-val="false">False ❌</button>
+                  </div>
+                </div>
+                <!-- Fill in blank -->
+                <div class="form-group fill-options" id="fill-options" style="display:none;">
+                  <label for="q-fill-answer">Correct Answer</label>
+                  <input type="text" id="q-fill-answer" placeholder="The correct word/phrase" />
+                </div>
+                <!-- Sentence Correction -->
+                <div class="form-group correct-options" id="correct-options" style="display:none;">
+                  <label for="q-correct-sentence">Correct Sentence</label>
+                  <input type="text" id="q-correct-sentence" placeholder="The corrected sentence" />
+                </div>
+                <!-- Explanation -->
+                <div class="form-group">
+                  <label for="q-explanation">Explanation (optional)</label>
+                  <textarea id="q-explanation" rows="2" placeholder="Why is this the correct answer?"></textarea>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="btn-cancel-question">Cancel</button>
+                  <button type="submit" class="btn btn-primary">Save Question</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manage Tab -->
+        <div class="admin-tab-content" id="tab-manage">
+          <div class="manage-section">
+            <div class="manage-section-header">
+              <span class="manage-section-icon">📅</span>
+              <h3>Day Management</h3>
+            </div>
+            <div class="manage-day-selector">
+              <label for="manage-day-select">Select Day:</label>
+              <select id="manage-day-select"></select>
+            </div>
+            <div class="manage-day-status" id="manage-day-status"></div>
+            <div class="manage-actions">
+              <button class="btn btn-secondary" id="btn-mark-complete">✅ Mark Day Complete</button>
+              <button class="btn btn-secondary" id="btn-mark-incomplete">↩️ Mark Day Incomplete</button>
+              <button class="btn btn-secondary" id="btn-reset-day">🔄 Reset Day Progress</button>
+            </div>
+          </div>
+          <div class="manage-section">
+            <div class="manage-section-header">
+              <span class="manage-section-icon">🎯</span>
+              <h3>Set Current Day</h3>
+            </div>
+            <p class="manage-hint">Jump Tuli to a specific day in her journey</p>
+            <div class="set-day-row">
+              <input type="number" id="set-day-input" min="1" max="84" placeholder="Day (1-84)" inputmode="numeric" />
+              <button class="btn btn-primary" id="btn-set-day">Set Day</button>
+            </div>
+          </div>
+          <div class="manage-section">
+            <div class="manage-section-header">
+              <span class="manage-section-icon">🔐</span>
+              <h3>PIN Settings</h3>
+            </div>
+            <div class="form-group">
+              <label for="new-pin">Change Admin PIN</label>
+              <input type="password" id="new-pin" maxlength="4" placeholder="New 4-digit PIN" inputmode="numeric" />
+              <button class="btn btn-primary" id="btn-change-pin" style="margin-top:8px;">Update PIN</button>
+            </div>
+          </div>
+          <div class="manage-section">
+            <div class="manage-section-header">
+              <span class="manage-section-icon">💾</span>
+              <h3>Data Management</h3>
+            </div>
+            <div class="manage-actions">
+              <button class="btn btn-secondary" id="btn-export-data">📦 Export All Data</button>
+              <button class="btn btn-danger" id="btn-reset-all">🗑️ Reset All Progress</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="nav-item active" data-page="home" id="nav-home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-item" data-page="learn" id="nav-learn">
+        <span class="nav-icon">📚</span>
+        <span class="nav-label">Learn</span>
+      </button>
+      <button class="nav-item" data-page="quiz" id="nav-quiz">
+        <span class="nav-icon">🧠</span>
+        <span class="nav-label">Quiz</span>
+      </button>
+      <button class="nav-item" data-page="vocab" id="nav-vocab">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">Words</span>
+      </button>
+      <button class="nav-item" data-page="streak" id="nav-streak">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Progress</span>
+      </button>
+    </nav>
+  </div>
+
+</body>
+</html>
